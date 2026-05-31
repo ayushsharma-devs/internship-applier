@@ -35,3 +35,4 @@ Thumbs.db
 *.log
 .pytest_cache/
 .mypy_cache/
+*.jsonl
