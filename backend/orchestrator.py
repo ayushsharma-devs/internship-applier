@@ -41,7 +41,7 @@ STEALTH_INIT_SCRIPT = """
 async def launch_stealth_context(p) -> BrowserContext:
     viewport_width = random.randint(1240, 1440)
     viewport_height = random.randint(760, 900)
-    return await p.chromium.launch_persistent_context(
+    context = await p.chromium.launch_persistent_context(
         user_data_dir="./automation_session",
         headless=False,
         viewport={"width": viewport_width, "height": viewport_height},
@@ -51,6 +51,8 @@ async def launch_stealth_context(p) -> BrowserContext:
         args=["--disable-blink-features=AutomationControlled", "--no-sandbox", "--start-maximized"],
         ignore_default_args=["--enable-automation"],
     )
+    await context.add_init_script(STEALTH_INIT_SCRIPT)
+    return context
 
 async def run_discovery_phase(page: Page, adapter: any, vault: dict, target_platform: str, search_base_url: str):
     logger.info(f"Starting Discovery Phase for platform: {target_platform.upper()}...")
@@ -86,7 +88,7 @@ async def run_discovery_phase(page: Page, adapter: any, vault: dict, target_plat
 async def run_application_phase(page: Page, adapter: any, vault: dict, target_platform: str):
     logger.info("Initializing Automated Application Pipeline Phase...")
     
-    context_file = Path("backend\profile_context.json")
+    context_file = Path("backend/profile_context.json")
     profile_data = {}
     if context_file.exists():
         try:
@@ -107,13 +109,15 @@ async def run_application_phase(page: Page, adapter: any, vault: dict, target_pl
             print("\n--- Context Preview ---")
         # Print the first 300 characters to verify structure looks clean
             print(cleaned_profile[:300] + "...\n-----------------------")
-        
+         # Load the newly generated profile
+            profile_data = json.loads(Path(OUTPUT_JSON).read_text(encoding="utf-8"))
         except Exception as e:
             print(f"❌ Script failed: {e}")
+            logger.error(f"Resume parsing failed, application phase may be incomplete: {e}")
     profile_data["ollama_base_url"] = Settings.OLLAMA_HOST
     applications_attempted = 0
 
-    for job_id, job_data in vault.items():
+    for  job_data in vault.items():
         if job_data.get("status") not in APPLY_ELIGIBLE_STATUSES:
             continue
 

@@ -171,13 +171,13 @@ class ApplicationTelemetry:
 class InternshalaAdapter(BasePlatformAdapter):
     def __init__(self):
         super().__init__(platform_key="internshala")
-        self.selectors = {
+        self.selectors.update({
             "apply_now_button": "a#apply_now_button, button:has-text('Apply now')",
             "already_applied_indicator": "button:has-text('Applied'), .already-applied-status",
             "form_text_inputs": "textarea:not([style*='display: none']), input[type='text'], .ql-editor",
             "final_submit_button": "input#submit, .submit_button_container input, button:has-text('Submit'), input[type='submit']",
             "job_description": ".job-description, .profile_detail, .job_summary_container ",
-        }
+        })
 
     def build_dense_context(self, profile_dict: dict, job_description: str) -> str:
         """
@@ -763,7 +763,7 @@ class LLMResponseSynthesizer:
         You are an advanced AI assistant acting strictly as Ayush Sharma, a computer science student.
 
 CRITICAL OUTPUT REQUIREMENTS:
-1. You MUST output a single, valid JSON object matching the keys provided.
+1. Output plain text only for a single form field answer.
 2. Do NOT include ANY HTML tags or Markdown formatting. Use plain text only.
 3. Keep each individual answer concise and under 120 words.
 
