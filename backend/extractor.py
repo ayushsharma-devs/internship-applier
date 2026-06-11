@@ -18,6 +18,11 @@ async def extract_page_listings(page: Page, config: dict) -> list:
 
     to maximize processing velocity and remove cross-process async loops.
     """
+    selectors = config.get("selectors") or {}
+    required = {"card_container", "job_title", "company_name"}
+    missing = [k for k in required if not selectors.get(k)]
+    if missing:
+        raise ValueError(f"Missing listing selectors: {', '.join(missing)}")
     # 1. Ship selectors to the browser context for ultra-low latency parsing
     try:
         raw_elements = await page.evaluate("""(cfg) => {
@@ -39,12 +44,18 @@ async def extract_page_listings(page: Page, config: dict) -> list:
         }""", config)
     except Exception as e:
         print(f"[{config.get('platform_name')} Extractor Error] Browser DOM evaluation crashed: {e}")
-        return []
+        raise
 
     # 2. Process, clean, and filter data instantly in memory using Python
     extracted_batch = []
     whitelist_keywords = {"stack", "web", "developer", "engineer", "backend", "frontend", "mern", "pern", "python", "fastapi", "php", "laravel", "javascript"}
-    blacklist_keywords= Settings.BLACK_LISTKEYWORDS
+    raw_blacklist = Settings.BLACK_LISTKEYWORDS
+    if isinstance(raw_blacklist, str):
+        blacklist_keywords = {
+            kw.strip().lower() for kw in raw_blacklist.split(",") if kw.strip()
+        }
+    else:
+        blacklist_keywords = {str(kw).strip().lower() for kw in raw_blacklist if str(kw).strip()}
     base_url = config.get("base_url", "").rstrip("/")
     platform_name = config.get("platform_name", "Unknown")
 

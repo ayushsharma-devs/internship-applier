@@ -4,12 +4,8 @@ import json
 from pathlib import Path
 
 from config import Settings
+import fitz  # PyMuPDF
 
-try:
-    import fitz  # PyMuPDF
-except ImportError:
-    print("Error: PyMuPDF is required. Install it using: pip install pymupdf")
-    sys.exit(1)
 
 
 def extract_and_clean_resume(pdf_path: str) -> str:
